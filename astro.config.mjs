@@ -1,8 +1,12 @@
 import { defineConfig } from 'astro/config';
 import cloudflare from '@astrojs/cloudflare';
+import dotenv from 'dotenv';
 
-// https://astro.build/config
+// Load environment variables from .env file
+dotenv.config();
+
+// Export Astro config
 export default defineConfig({
-  output: 'server', // This is crucial for enabling server-side functionality
-  adapter: cloudflare()
+  output: 'server', 
+  adapter: cloudflare(),
 });
