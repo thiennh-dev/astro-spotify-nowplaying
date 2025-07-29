@@ -1,0 +1,8 @@
+# wrangler.toml
+name = "my-worker"
+type = "javascript"
+
+[vars]
+SPOTIFY_CLIENT_ID = "4a8fe6cec13147e982fa00354ae92528"
+SPOTIFY_CLIENT_SECRET = "27994f2c2def4ac8ad6e7cd2302b9ffc"
+SPOTIFY_REFRESH_TOKEN = "AQAe2MDG..."
