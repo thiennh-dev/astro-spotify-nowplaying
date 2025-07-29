@@ -11,9 +11,9 @@ export const GET: APIRoute = async () => {
 
   try {
     // --- Environment Variable Check ---
-    const client_id = import.meta.env.SPOTIFY_CLIENT_ID;
-    const client_secret = import.meta.env.SPOTIFY_CLIENT_SECRET;
-    const refresh_token = import.meta.env.SPOTIFY_REFRESH_TOKEN;
+    const client_id = "4a8fe6cec13147e982fa00354ae92528";
+    const client_secret = "27994f2c2def4ac8ad6e7cd2302b9ffc";
+    const refresh_token = "AQAe2MDGllTbz6gc2BKPI2Jh4HF6WwYo4qYoruwqIAKGVJDRIKD4nxCMZ3T9Zhp8j6kChH40GFmUbIVDejOkuXxKj8_R3FhDCx8-uN-CDK41s0rIYNgk5O1vSWluEriII28"
 
     // Log to check if variables are loaded (but don't log the secrets themselves!)
     console.log("SPOTIFY_CLIENT_ID loaded:", !!client_id);
