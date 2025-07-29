@@ -1,61 +1,97 @@
 ---
-// No server-side code is needed here anymore.
-// The page is static HTML, and the dynamic data is loaded by the client.
 ---
 
 <html lang="en">
 <head>
   <meta charset="utf-8" />
   <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-  <meta name="viewport" content="width=device-width" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="generator" content={Astro.generator} />
-  <title>Spotify Now Playing</title>
+  <title>Now Playing on Spotify</title>
   <style>
     :root {
-      --bg-color: #121212;
-      --card-color: #1e1e1e;
-      --text-color: #ffffff;
-      --subtle-text-color: #b3b3b3;
+      --bg-color: #0d0d0d;
+      --card-bg: #1f1f1f;
+      --primary-text: #ffffff;
+      --secondary-text: #aaaaaa;
+      --accent: #1db954;
     }
+
+    * {
+      box-sizing: border-box;
+    }
+
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';
-      background-color: var(--bg-color);
-      color: var(--text-color);
-      display: grid;
-      place-content: center;
-      min-height: 100vh;
       margin: 0;
-      text-align: center;
+      padding: 0;
+      background: var(--bg-color);
+      color: var(--primary-text);
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      display: grid;
+      place-items: center;
+      min-height: 100vh;
     }
+
+    main {
+      padding: 1rem;
+    }
+
     .player {
-      background: var(--card-color);
+      background: var(--card-bg);
+      border-radius: 16px;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6);
       padding: 2rem;
-      border-radius: 12px;
-      width: 350px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+      max-width: 380px;
+      width: 100%;
+      text-align: center;
+      transition: all 0.3s ease-in-out;
     }
+
     .player img {
       width: 100%;
+      max-width: 320px;
       height: auto;
       aspect-ratio: 1 / 1;
-      border-radius: 8px;
-      margin-bottom: 1rem;
+      object-fit: cover;
+      border-radius: 12px;
+      margin-bottom: 1.5rem;
+      border: 2px solid var(--accent);
     }
+
     .player h2 {
-      margin: 0.5rem 0;
-      font-size: 1.5rem;
-      white-space: nowrap;
+      font-size: 1.75rem;
+      font-weight: 600;
+      margin: 0.5rem 0 0.25rem;
       overflow: hidden;
+      white-space: nowrap;
       text-overflow: ellipsis;
     }
+
     .player p {
-      margin: 0.25rem 0;
-      color: var(--subtle-text-color);
+      margin: 0.3rem 0;
+      font-size: 0.95rem;
+      color: var(--secondary-text);
     }
+
+    .player p strong {
+      color: var(--primary-text);
+    }
+
     .time-fetch {
       font-size: 0.8rem;
+      margin-top: 1.25rem;
       color: #666;
-      margin-top: 1.5rem;
+    }
+
+    @media (max-width: 420px) {
+      .player {
+        padding: 1.5rem;
+        border-radius: 12px;
+      }
+
+      .player h2 {
+        font-size: 1.4rem;
+      }
     }
   </style>
 </head>
@@ -68,11 +104,7 @@
 
   <script>
     const playerElement = document.getElementById('spotify-player');
-
-    /**
-     * Formats milliseconds into a MM:SS time string.
-     * @param ms - The time in milliseconds. 
-     */
+    
     function formatTime(ms: number): string {
       const totalSeconds = Math.floor(ms / 1000);
       const minutes = Math.floor(totalSeconds / 60);
@@ -80,25 +112,18 @@
       return `${minutes}:${seconds.toString().padStart(2, '0')}`;
     }
 
-    /** 
-     * Fetches data from our API route and updates the DOM.
-     */
+
     async function fetchNowPlaying() {
-      // This is a "guard clause" to prevent errors if the element isn't found.
-      // It solves the "'playerElement' is possibly 'null'" TypeScript error.
       if (!playerElement) {
-        console.error('Fatal Error: The player element was not found in the DOM.');
+        console.error('Player element not found');
         return;
       }
 
       try {
-        // We fetch from our own API route, not directly from Spotify.
         const response = await fetch('/api/spotify.json');
         if (!response.ok) throw new Error(`Server returned ${response.status}`);
-        
-        const data = await response.json();
 
-        // Get the current time in your local timezone (GMT+7)
+        const data = await response.json();
         const fetchTime = new Date().toLocaleTimeString('en-GB', { timeZone: 'Asia/Ho_Chi_Minh' });
 
         if (data.isPlaying) {
@@ -117,17 +142,16 @@
           `;
         }
       } catch (error) {
-        console.error('Error fetching Now Playing data:', error);
-        if (playerElement) {
-           playerElement.innerHTML = `<p>Could not fetch data. Please try again later.</p>`;
-        }
+        console.error('Error fetching Spotify data:', error);
+        playerElement.innerHTML = `
+          <h2>Oops!</h2>
+          <p>Could not fetch data.</p>
+          <p class="time-fetch">Try again later.</p>
+        `;
       }
     }
 
-    // Run the function on page load
     fetchNowPlaying();
-
-    // And then run it again every 5 seconds
     setInterval(fetchNowPlaying, 5000);
   </script>
 </body>
