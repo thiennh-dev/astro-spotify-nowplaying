@@ -1,5 +1,6 @@
 import type { APIRoute } from 'astro';
 
+
 // Spotify API Endpoints
 const NOW_PLAYING_ENDPOINT = `https://api.spotify.com/v1/me/player/currently-playing`;
 const TOKEN_ENDPOINT = `https://accounts.spotify.com/api/token`;
@@ -30,7 +31,7 @@ export const GET: APIRoute = async () => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
-        'Authorization': `Basic ${Buffer.from(`${client_id}:${client_secret}`).toString('base64')}`
+        'Authorization': `Basic ${btoa(`${client_id}:${client_secret}`)}`
       },
       body: new URLSearchParams({
         grant_type: 'refresh_token',
