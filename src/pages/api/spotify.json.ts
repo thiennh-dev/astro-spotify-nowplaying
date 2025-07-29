@@ -1,91 +1,88 @@
 import type { APIRoute } from 'astro';
 
-// Type definition for the expected structure of Spotify's API response
-interface SpotifyNowPlaying {
-  is_playing: boolean;
-  item?: {
-    name: string;
-    artists: { name: string }[];
-    album: {
-      images: { url: string }[];
-    };
-    external_urls: {
-      spotify: string;
-    };
-    duration_ms: number;
-  };
-  progress_ms?: number;
-}
-
 // Spotify API Endpoints
 const NOW_PLAYING_ENDPOINT = `https://api.spotify.com/v1/me/player/currently-playing`;
 const TOKEN_ENDPOINT = `https://accounts.spotify.com/api/token`;
 
-// Your Spotify Credentials from Environment Variables
-// These MUST be set in your Cloudflare Pages project settings
-const client_id = import.meta.env.SPOTIFY_CLIENT_ID;
-const client_secret = import.meta.env.SPOTIFY_CLIENT_SECRET;
-const refresh_token = import.meta.env.SPOTIFY_REFRESH_TOKEN;
-
-// This function gets a fresh access token from Spotify using your refresh token
-const getAccessToken = async () => {
-  const response = await fetch(TOKEN_ENDPOINT, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded',
-      'Authorization': `Basic ${Buffer.from(`${client_id}:${client_secret}`).toString('base64')}`
-    },
-    body: new URLSearchParams({
-      grant_type: 'refresh_token',
-      refresh_token: refresh_token,
-    })
-  });
-  return response.json();
-};
-
-// This is the main API route handler for GET requests
+// This is the main API route handler
 export const GET: APIRoute = async () => {
-  // 1. Get a fresh access token
-  const { access_token } = await getAccessToken();
+  console.log("API route '/api/spotify.json' triggered.");
 
-  // 2. Fetch the currently playing song from Spotify
-  const response = await fetch(NOW_PLAYING_ENDPOINT, {
-    headers: {
-      Authorization: `Bearer ${access_token}`
+  try {
+    // --- Environment Variable Check ---
+    const client_id = import.meta.env.SPOTIFY_CLIENT_ID;
+    const client_secret = import.meta.env.SPOTIFY_CLIENT_SECRET;
+    const refresh_token = import.meta.env.SPOTIFY_REFRESH_TOKEN;
+
+    // Log to check if variables are loaded (but don't log the secrets themselves!)
+    console.log("SPOTIFY_CLIENT_ID loaded:", !!client_id);
+    console.log("SPOTIFY_CLIENT_SECRET loaded:", !!client_secret);
+    console.log("SPOTIFY_REFRESH_TOKEN loaded:", !!refresh_token);
+
+    if (!client_id || !client_secret || !refresh_token) {
+      console.error("CRITICAL: One or more Spotify environment variables are missing.");
+      return new Response(JSON.stringify({ error: "Server configuration error." }), { status: 500 });
     }
-  });
 
-  // 3. Handle cases where nothing is playing (204 No Content) or other errors
-  if (response.status === 204 || response.status > 400) {
-    return new Response(JSON.stringify({ isPlaying: false }), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' }
+    // --- Get Access Token ---
+    console.log("Attempting to get access token from Spotify...");
+    const tokenResponse = await fetch(TOKEN_ENDPOINT, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Authorization': `Basic ${Buffer.from(`${client_id}:${client_secret}`).toString('base64')}`
+      },
+      body: new URLSearchParams({
+        grant_type: 'refresh_token',
+        refresh_token: refresh_token,
+      })
     });
-  }
 
-  const song: SpotifyNowPlaying = await response.json();
-
-  // 4. Extract the data we need from the Spotify response
-  const data = {
-    isPlaying: song.is_playing,
-    title: song.item?.name,
-    artist: song.item?.artists.map((artist) => artist.name).join(', '),
-    albumImageUrl: song.item?.album.images[0].url,
-    songUrl: song.item?.external_urls.spotify,
-    timestamp: song.progress_ms,
-    duration: song.item?.duration_ms,
-  };
-
-  // 5. Return the data with cache-control headers
-  // THIS IS THE FIX FOR CLOUDFLARE CACHING:
-  // It tells Cloudflare and the browser not to store a copy of this response.
-  return new Response(JSON.stringify(data), {
-    status: 200,
-    headers: {
-      'content-type': 'application/json',
-      'Cache-Control': 'no-cache, no-store, must-revalidate',
-      'Pragma': 'no-cache',
-      'Expires': '0'
+    if (!tokenResponse.ok) {
+      const errorBody = await tokenResponse.text();
+      console.error(`Spotify Token API Error: ${tokenResponse.status} ${tokenResponse.statusText}`, errorBody);
+      return new Response(JSON.stringify({ error: "Failed to authenticate with Spotify." }), { status: 502 }); // 502 Bad Gateway is appropriate here
     }
-  });
+
+    const { access_token } = await tokenResponse.json();
+    console.log("Successfully obtained access token.");
+
+    // --- Fetch Now Playing ---
+    console.log("Fetching currently playing song...");
+    const nowPlayingResponse = await fetch(NOW_PLAYING_ENDPOINT, {
+      headers: { Authorization: `Bearer ${access_token}` }
+    });
+
+    if (nowPlayingResponse.status === 204 || nowPlayingResponse.status > 400) {
+      console.log("Spotify is not playing anything or returned an error status.");
+      return new Response(JSON.stringify({ isPlaying: false }), { status: 200 });
+    }
+
+    const song = await nowPlayingResponse.json();
+    console.log("Successfully fetched song data.");
+
+    const data = {
+      isPlaying: song.is_playing,
+      title: song.item?.name,
+      artist: song.item?.artists.map((artist: any) => artist.name).join(', '),
+      albumImageUrl: song.item?.album.images[0].url,
+      songUrl: song.item?.external_urls.spotify,
+      timestamp: song.progress_ms,
+      duration: song.item?.duration_ms,
+    };
+
+    return new Response(JSON.stringify(data), {
+      status: 200,
+      headers: {
+        'content-type': 'application/json',
+        'Cache-Control': 'no-cache, no-store, must-revalidate'
+      }
+    });
+
+  } catch (error: any) {
+    // This will catch any unexpected errors in the logic above
+    console.error("A fatal error occurred in the API route:", error.message);
+    console.error(error.stack);
+    return new Response(JSON.stringify({ error: "An internal server error occurred." }), { status: 500 });
+  }
 };
