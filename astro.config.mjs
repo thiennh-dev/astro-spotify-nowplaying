@@ -4,6 +4,8 @@ import dotenv from 'dotenv';
 import astroIcon from 'astro-icon';
 import tailwindcss from '@tailwindcss/vite'
 
+import react from '@astrojs/react';
+
 // Load environment variables from .env file
 dotenv.config();
 
@@ -12,7 +14,7 @@ export default defineConfig({
   output: 'server', 
   adapter: cloudflare(),
   site: 'https://thiennh.icu',
-  integrations: [astroIcon()],
+  integrations: [astroIcon(), react()],
   vite: {
     plugins: [tailwindcss()],
   },
