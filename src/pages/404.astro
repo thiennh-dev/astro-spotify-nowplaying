@@ -1,8 +1,8 @@
 ---
-import BreadCrumb from "../components/bread-crumb.astro";
-import { buttonVariants } from "../components/button";
+import Breadcrumbs from "../components/Breadcrumbs.astro";
 import Link from "../components/link.astro";
 import PageHead from "../components/page-head.astro";
+import { buttonVariants } from "../components/ui/button";
 import BaseLayout from "../layouts/base-layout.astro";
 import { cn } from "../libs/utils";
 
@@ -12,7 +12,7 @@ import { cn } from "../libs/utils";
 <BaseLayout class="max-w-3xl">
   <PageHead slot="head" title="404" />
 
-  <BreadCrumb items={[{ label: '???', icon: 'lucide:circle-help' }]} />
+  <Breadcrumbs items={[{ label: '???', icon: 'lucide:circle-help' }]} />
 
   <section
     class="flex flex-col items-center justify-center gap-y-4 text-center"
