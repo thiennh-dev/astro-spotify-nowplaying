@@ -8,6 +8,8 @@ import { getAllPosts, groupPostsByYear } from '../../libs/data-utils'
 import { SITE } from '../../consts'
 import PageHead from '../../components/PageHead.astro'
 
+export const prerender = true;
+
 
 export async function getStaticPaths({
   paginate,
