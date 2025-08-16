@@ -14,7 +14,6 @@ import {
 } from "../../libs/data-utils"
 import { formatDate } from "../../libs/utils"
 import { Icon } from 'astro-icon/components'
-import { Image } from 'astro:assets'
 import { render } from 'astro:content'
 import { Button } from "../../components/ui/button"
 import BaseLayout from "../../layouts/base-layout.astro"
@@ -27,6 +26,10 @@ import PostNavigation from "../../components/PostNavigation.astro"
 import TOCSidebar from "../../components/TOCSidebar.astro"
 import SubpostsSidebar from "../../components/SubpostsSidebar.astro"
 import Badge from "../../components/Badge.astro"
+import { Image } from 'astro:assets'
+
+export const prerender = true;
+
 
 export async function getStaticPaths() {
   const posts = await getAllPostsAndSubposts()
